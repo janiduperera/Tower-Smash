@@ -38,11 +38,13 @@ public class GameController : SingletonMonoBehaviour<GameController>
             return;
         }
 
+#if UNITY_EDITOR
         if (Input.GetMouseButtonDown(0))
         {
             m_MouseClicked = true;
         }
-        else { 
+        else 
+        { 
             if (Input.GetMouseButtonUp(0))
             {
                 m_Ray = m_MainCamera.ScreenPointToRay(Input.mousePosition);
@@ -64,6 +66,38 @@ public class GameController : SingletonMonoBehaviour<GameController>
                 CameraRotaterTransform.Rotate(Vector3.up * Input.GetAxis("Mouse X") * RotationSensitivity * Time.deltaTime, Space.World);
             }
         }
+#else
+        if(Input.touchCount > 0)
+        {
+            if (Input.GetTouch(0).phase == TouchPhase.Began)
+            {
+                m_MouseClicked = true;
+            }
+            else 
+            {
+                if (Input.GetTouch(0).phase == TouchPhase.Ended || Input.GetTouch(0).phase == TouchPhase.Canceled)
+                {
+                    m_Ray = m_MainCamera.ScreenPointToRay(Input.GetTouch(0).position);
+                    if (Physics.Raycast(m_Ray, out m_RayCastHitInfo, 50))
+                    {
+                        if (m_RayCastHitInfo.collider.tag == "Cylinder")
+                        {
+                            if (m_MouseClicked)
+                            {
+                                m_MouseClicked = false;
+                                ShootBall(m_RayCastHitInfo.collider.gameObject.GetComponent<BaseCylinder>(), m_RayCastHitInfo.point);
+                            }
+                        }
+                    }
+                }
+                else if (Input.GetTouch(0).phase == TouchPhase.Moved && System.Math.Abs(Input.GetAxis("Mouse X")) > 0.5f)
+                {
+                    m_MouseClicked = false;
+                    CameraRotaterTransform.Rotate(Vector3.up * Input.GetAxis("Mouse X") * RotationSensitivity * Time.deltaTime, Space.World);
+                } 
+            }
+        }
+ #endif
     }
     #endregion Input
 
